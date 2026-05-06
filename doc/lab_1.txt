@@ -1,0 +1,40 @@
+1.  UART communication, introduction to the laboratory kit, development environment,
+    and basics of programming and debugging embedded applications. Event detection
+    (incoming data) using polling.
+
+    • Assignment details; when solving this task, take a look on the Chapter 38 Universal Asynchronous Receiver/
+      Transmitter(UART) (beginning at page 693), and also the Laboratory Kit Schematic (e.g. to identify the UART
+      receiver and transmitter pins on the MCU interface):
+
+        o This assignment requires you to set up and run a PC terminal application
+          (e.g. Putty) for communication between the PC (USB) and the laboratory kit
+          (UART) with the following parameters: baud rate 115200 Bd (b/s), 8 data bits
+          per frame, 1 stop bit, no parity, connection via COMx on the PC (the exact
+          value of "x" may differ between PCs):
+
+        o Complete the template of the laboratory so that the resulting application
+          behaves according to the following expected behaviour (see comments in C code):
+
+            - After the "Login>" prompt, the user will type characters on the PC keyboard
+              via the terminal in Putty. Each character will be received on the MCU 
+              side by the UART receiver module and immediately sent back to the PC by 
+              the UART transmitter module, so that it appears in the terminal.
+
+            - The application will store incoming characters into a character array
+              "entered_login", in the order they arrive. After the array is full
+              (i.e. after receiving 8 characters), the application will compare the
+              contents of "login" with the contents of a reference string (see the
+              "correct_login", which you MUST initialize with the string corresponding
+              to your FIT VUT login or other desired string).
+
+            - If the strings are identical, the application will exit your for loop and 
+              produce a sound ("beep"), e.g. to signal access granted, by calling
+              the beep() function. Otherwise, i.e. if the strings do not match,
+              the application will print a suitable message to the PC terminal,
+              e.g. "INCORRECT", informing the user that access was denied, and will allow
+              the user to enter the eight characters again.
+
+            - Follow the comments in C template at the appropriate places; implement the
+              character receive function using a polling loop. Exactly in the functions:
+              + static char uart_recv_char(void)
+              + int main(void)

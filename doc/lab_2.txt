@@ -1,0 +1,38 @@
+2.  Using ports as general-purpose digital inputs/outputs (GPIO), event detection
+    (button press) using interrupts, and reacting to events via an interrupt
+    service routine.
+
+    • Assignment details; when solving this task, take a look on the Chapter 41 
+      General-Purpose Input/Output (GPIO) and 11.7 Memory map and register definition
+      , and the Laboratory Kit Schematic (e.g. to identify the MCU pins used to detect
+      button states and to understand the button wiring):
+
+        o After programming and running the template embedded application, on the display 
+          will be short LAb2 welcome animation; then the application then enters 
+          an infinite loop; in main(). When any of the buttons is pressed, the application
+          will repeatedly invoke PORTC_PORTD_IRQHandler(), which will manifest to do desired 
+          reaction for button triggering.
+
+        o Complete the template embedded application, i.e. the body of the function
+          PORTC_PORTD_IRQHandler(), so that the resulting application behaves according
+          to the following expected behaviour (see also comments in C template):
+
+            - The user may press any of the 5 buttons on the laboratory kit (up, down,
+              left, right, center), whereby the event of pressing an individual button
+              is captured by the interrupt system and leads to a single invocation of
+              PORTC_PORTD_IRQHandler(). Other events, such as simultaneous pressing of
+              multiple buttons or a button release event, do not need to be handled.
+
+            - Complete the handler body so that an individual press of each button is
+              correctly detected and subsequently handled exactly once. Each button
+              press should trigger a distinct face expression on the 7-segment display,
+              for inspiration:
+                  UP     -> FACE_SURPRISED
+                  LEFT   -> FACE_WINK_LEFT
+                  CENTER -> FACE_HAPPY
+                  RIGHT  -> FACE_WINK_RIGHT
+                  DOWN   -> FACE_ASLEEP
+
+            - Your task is to finnish these functions:
+                + static void buttons_init(void)
+                + void PORTC_PORTD_IRQHandler(void)

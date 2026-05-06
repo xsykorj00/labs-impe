@@ -1,0 +1,31 @@
+4.  Sampling a continuous signal using an AD converter, processing of samples.
+
+    • Assignment details; when solving this task, take a look on the Chapter 23
+      Analog-to-Digital Converter (ADC) and the Laboratory Kit Schematic (e.g. to study
+      the connection between the display and the MCU, and to identify the AD converter
+      pins (channels) used for sampling a continuous quantity from the MCU interface):
+
+        o After programming and running the embedded application will enter the infinite
+          loop in main(), where it will continuously update the contents of the 4-digit
+          7-segment LED display on the laboratory kit to display current voltage.
+
+        o Complete the template embedded application, i.e. the bodies of the functions
+          ADC0_Init() and ADC0_IRQHandler(), so that the resulting application behaves
+          according to the following expected behaviour (see also comments in C template):
+
+            - The AD converter (ADC) will sample the given continuous quantity
+              continuously, with a conversion cycle determined by Bus clock/2 and
+              clock divider = 8; the resulting ADC sample will be 8-bit, produced
+              from a hardware-averaged series of 32 consecutive samples; the
+              completion of each ADC sample will be signalled by an interrupt.
+
+            - In the interrupt service routine, the resulting ADC sample will be
+              read/stored, e.g. into a suitable local variable, and from its value
+              it will be determined how many units, tenths, and hundredths of the
+              measured quantity this sample represents. The obtained information
+              will be correctly inserted into the "result" string for the purpose
+              of displaying it on the laboratory kit display. Your task is to 
+              complete these functions:
+              + void ADC0_IRQHandler(void)
+              + static void adc0_init(void)
+              + int main(void)
