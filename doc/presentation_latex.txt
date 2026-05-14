@@ -1,0 +1,405 @@
+\documentclass[xcolor=dvipsnames,table,10pt]{beamer}
+%\documentclass[xcolor=dvipsnames,table,10pt, aspectratio=169]{beamer}
+\usepackage{newcent}
+\usepackage[utf8]{inputenc}
+%\usepackage[czech]{babel}
+%\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usetheme{FIT}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title[Short Title]{Introduction to the Laboratory \\ ARM
+Kit with MCXC143VFT}
+
+\author[]{Juraj Sýkora}
+
+\institute[]{Brno University of Technology, Faculty of Information Technology\\
+Bo\v{z}et\v{e}chova 1/2, 612 00 Brno -- Kr\'alovo Pole\\
+xsykorj00@vutbr.cz}
+
+%\institute[]{Fakulta informačních technologií
+%Vysokého učení technického v Brně\\
+%Bo\v{z}et\v{e}chova 1/2, 612 00 Brno -- Kr\'alovo Pole\\
+%login@fit.vutbr.cz}
+
+% České logo - Czech logo
+% beamerouterthemeFIT.sty řádek 9: fitlogo1_cz
+
+\date{\today}
+%\date{} % bez data / without date
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%------------------------------------------------------------------------------
+\frame[plain]{\titlepage}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Contents}
+    \begin{itemize}
+        \item 32-bit ARM MCU laboratory kit
+        \item Schematic: debug interface and power supply
+        \item Schematic: target MCU MCXC143VFT and peripherals
+        \item MCUXpresso IDE -- project creation
+        \item MCUXpresso IDE -- build, flash and debug
+    \end{itemize}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{32-bit ARM MCU Laboratory Kit}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{itemize}
+                \item Kits are located in laboratory \textbf{L306}
+                \item Target MCU: \emph{NXP \textbf{MCXC143VFT}}
+                    \begin{itemize}
+                        \item ARM \textbf{Cortex-M0+} core, up to \textbf{48\,MHz}
+                        \item \textbf{256\,kB} Flash, \textbf{32\,kB} SRAM
+                        \item 48-pin LQFP package
+                    \end{itemize}
+                \item On-board debugger: \textbf{MCU-Link~v3}\\
+                      (NXP LPC55S69JEV98)
+                \item \textbf{USB-C} connector\\
+                      -- power + CMSIS-DAP/SWD debug
+                \item 3.3\,V main supply via \textbf{RT9080-33} LDO
+            \end{itemize}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/34553.jpg}
+                \textit{[Kit in the labs]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Schematic -- Debug Interface}
+    \begin{columns}
+        \column{0.42\textwidth}
+            \textbf{Key components:}
+            \begin{itemize}
+                \item \textbf{USB4105-GF-A} -- USB-C receptacle
+                \item \textbf{RClamp0502A} -- USB ESD protection
+                \item \textbf{LPC55S69JEV98} -- MCU-Link~v3 chip
+                \item \textbf{RT9080-33GJ5} -- 3.3\,V LDO regulator
+                \item \textbf{MPZ1608S331} -- ferrite bead EMI filters
+                \item \textbf{Y1} -- 16\,MHz crystal for MCU-Link
+            \end{itemize}
+        \column{0.58\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/arm_kit_debugger_pwr.png}
+                \textit{[Schematic: ARM\_Kit\_Debugger\_PWR]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Schematic -- SWD Debug Interface}
+    \begin{columns}
+        \column{0.42\textwidth}
+            \textbf{SWD connections (LPC55S69 $\rightarrow$ MCXC143):}
+            \begin{itemize}
+                \item \textbf{TGTMCU\_SWD\_CLK\,/\,\_DIO}\\
+                      -- SWD clock and data lines
+                \item \textbf{TGTMCU\_RESET} -- target reset
+                \item \textbf{ISP\_EN\,/\,LED\_SWD\_ACT} -- status
+                \item \textbf{SW1\,/\,SW2} -- user buttons (debugger side)
+                \item \textbf{R4,\,R5} (2\,k$\Omega$) -- SWD pull-ups
+                \item \textbf{D2\,/\,D4} -- activity LEDs
+            \end{itemize}
+        \column{0.58\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/arm_kit_debugger_swd.png}
+                \textit{[Schematic: ARM\_Kit\_Debugger\_SWD]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Schematic -- Target MCU MCXC143VFT}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \textbf{Key pin assignments:}
+            \begin{itemize}
+                \item \textbf{PTA0/SWD\_CLK}, \textbf{PTA3/SWD\_DIO},
+                      \textbf{PTA20/RESET\_b} -- SWD debug interface
+                \item \textbf{PTE16/UART2\_TX}, \textbf{PTE17/UART2\_RX}\\
+                      -- RS-232 via MAX3221E
+                \item \textbf{PTD0-2\,/\,TPM0\_CH0-2} -- RGB LED PWM
+                \item \textbf{PTB0\,/\,TPM1\_CH0} -- buzzer PWM
+                \item \textbf{PTC0\,/\,ADC0\_SE14} -- sliding potentiometer
+                \item \textbf{VDDA\,/\,VREFH\,/\,VREFL}\\
+                      -- analog supply and reference
+            \end{itemize}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/arm_kit_core-ic4.png}
+                \textit{[Schematic: ARM\_Kit\_CORE -- IC4]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Schematic -- RS-232 and 7-Segment Display}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \textbf{RS-232 serial interface:}
+            \begin{itemize}
+                \item Transceiver \textbf{MAX3221ECDBR}
+                \item Connector \textbf{DSUB-9F/H}
+                \item UART2\_TX/RX $\leftrightarrow$ TxD/RxD
+            \end{itemize}
+            \vspace{0.4em}
+            \textbf{4-digit 7-segment display (DS1 -- LTC-4627G):}
+            \begin{itemize}
+                \item Common-anode; digit drive:\\
+                      \textbf{Q1--Q4} (BSS84PW P-FETs),\\
+                      \textbf{Q5} drives colon dots (LDOTS)
+                \item Segment signals: \textbf{SEG\_A--G, SEG\_DP}
+                \item Current-limiting resistors R13--R20 (261\,$\Omega$)
+            \end{itemize}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/rs232_si.png}\\[2pt]
+                \includegraphics[width=\textwidth]{img/7seg.png}
+                \textit{[Schematic: RS-232 + 7-SEG]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{Schematic -- Buttons, RGB LED, Buzzer, Potentiometer}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \textbf{Push buttons PB1--PB5 (SW-ULP12):}
+            \begin{itemize}
+                \item \textbf{PBx\_RC\,/\,PBx\_GC} -- GPIO and LED anode
+            \end{itemize}
+            \vspace{0.3em}
+            \textbf{Analog RGB LED (D3 -- WP154A4):}
+            \begin{itemize}
+                \item \textbf{LED\_R/G/B\_PWM} driven by \textbf{TPM0\_CH0--2}
+                \item R10=300\,$\Omega$,\ R11\,/\,R12=20\,$\Omega$
+            \end{itemize}
+            \vspace{0.3em}
+            \textbf{Piezo buzzer (LS1):}
+            \begin{itemize}
+                \item NPN driver \textbf{Q6} (BC847C)
+                \item Signal: \textbf{BEEPER\_PWM} on \textbf{PTB0}
+            \end{itemize}
+            \vspace{0.3em}
+            \textbf{Sliding potentiometer:}
+            \begin{itemize}
+                \item \textbf{RPOT\_SLIDE} $\rightarrow$ \textbf{ADC0\_SE14}
+            \end{itemize}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/btns_led_buzz_pot.png}
+                \textit{[Schematic: BUTTONS + RGB + BUZZER + POT]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{MCUXpresso IDE -- Creating a New Project}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{enumerate}
+                \item \textbf{File} $\rightarrow$ \textbf{New}
+                      $\rightarrow$ \emph{Create a new C/C++ project}
+                \item Select \emph{NXP MCUXpresso SDK Project}
+                \item Choose \textbf{SDK} for \textbf{MCXC143VFT}\\
+                      {\small (download from \texttt{mcuxpresso.nxp.com}\\
+                      if not yet installed)}
+                \item Enter a \textbf{project name}; set the workspace,\\
+                      e.g.\ \texttt{D:/IMP\_Labs/} or \texttt{P:/IMP\_Labs/}
+                \item Select language \textbf{C}; leave the default linker script
+                \item Click \textbf{Finish}
+            \end{enumerate}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/ide_new_project.png}
+                \textit{[Screenshot: New Project Wizard]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{MCUXpresso IDE -- Build and Flash}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{itemize}
+                \item \textbf{Build} (\textit{hammer icon})\\
+                      -- compiles sources and links the binary
+                \item \textbf{Debug} (\textit{bug icon})\\
+                      -- starts an interactive debug session
+                \item \textbf{Perspective switcher}\\
+                      -- toggle between \emph{C/C++} (edit)\\
+                      and \emph{Debug} views
+                \item \textbf{Console} panel\\
+                      -- build output; check here for errors
+                \item \textbf{Variables\,/\,Registers\,/\, \ Memory}\\
+                      -- inspect MCU state at runtime
+            \end{itemize}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/ide_main.png}
+                \textit{[Screenshot: MCUXpresso main window]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{MCUXpresso IDE -- Debug Configuration}
+    \begin{columns}
+        \column{0.48\textwidth}
+            \begin{enumerate}
+                \item Arrow next to \textbf{Debug}
+                      $\rightarrow$ \emph{Debug Configurations\ldots}
+                \item Expand \textbf{GDB SEGGER Interface Debugging};\\
+                      select or create the project entry
+                \item \textbf{Main} tab -- verify:
+                    \begin{itemize}
+                        \item \emph{Project} -- your project name
+                        \item \emph{C/C++ Application} path
+                    \end{itemize}
+                \item \textbf{JLink Debugger} tab -- verify:
+                    \begin{itemize}
+                        \item \emph{Device}: \texttt{MCXC143}
+                        \item \emph{Target Interface}: \texttt{SWD}
+                        \item \emph{JLink Interface}: USB
+                    \end{itemize}
+                \item Click \textbf{Debug}
+                \item Resume execution: \textbf{F8} or green \emph{Resume} button
+            \end{enumerate}
+        \column{0.52\textwidth}
+            \begin{center}
+                \includegraphics[width=\textwidth]{img/ide_debug_cfg.png}
+                \textit{[Screenshot: Debug Configurations]}
+            \end{center}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}\frametitle{MCUXpresso IDE -- Running and Stopping Code}
+    \begin{itemize}
+        \item \textbf{Resume (F8)} -- starts or continues execution on the MCU
+        \item \textbf{Suspend} -- pauses execution; inspect variables, registers, memory
+        \item \textbf{Terminate (Ctrl+F2)} -- ends the debug session\\
+              Confirm the entry in the \emph{Debug} view turns \textbf{grey}\\
+              {\small A \emph{red} entry means the session is still active -- cannot be restarted!}
+        \item After terminating, click \textbf{C/C++} perspective to return to the editor
+    \end{itemize}
+    \bigskip
+    \begin{alertblock}{Stuck debug session}
+        If the debug thread hangs, right-click \texttt{<terminated>} in the
+        \emph{Debug} view and choose \textbf{Terminate and Remove}.
+    \end{alertblock}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\begin{frame}[fragile]\frametitle{Code Example -- Piezo Buzzer}
+    \begin{columns}
+        \column{0.58\textwidth}
+\begin{Verbatim}[fontsize=\scriptsize]
+#include "MCXC143.h"
+
+static void delay(volatile uint32_t n) {
+    while (n--);
+}
+
+int main(void) {
+    /* Disable watchdog explicitly */
+    SIM->COPC = SIM_COPC_COPT(0);
+
+    /* Enable clock gate for Port B */
+    SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
+
+    /* PTB0 -> GPIO output (MUX = 1) */
+    PORTB->PCR[0] = PORT_PCR_MUX(1);
+    GPIOB->PDDR  |= (1u << 0);
+    GPIOB->PCOR   = (1u << 0);   /* start LOW */
+
+    for (;;) {
+        GPIOB->PSOR = (1u << 0);  /* PTB0 high */
+        delay(50000u);
+        GPIOB->PCOR = (1u << 0);  /* PTB0 low  */
+        delay(50000u);
+    }
+    return 0;
+}
+\end{Verbatim}
+        \column{0.42\textwidth}
+            \textbf{Notes:}
+            \begin{itemize}
+                \item Header \texttt{MCXC143.h}\\
+                      selected for MCXC143
+                \item Use atomic \texttt{PSOR}/\texttt{PCOR}\\
+                      instead of read-modify-\\
+                      write on \texttt{PDOR}
+                \item Watchdog disabled\\
+                      explicitly via \texttt{SIM->COPC}
+                \item \textbf{BEEPER\_PWM} is wired\\
+                      to \textbf{PTB0} on the kit\\
+                      (see schematic ARM\_Kit\_CORE)
+            \end{itemize}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+% NOTE: On MCXC143 (Kinetis KL / MCXC family) PORTC and PORTD share a single
+% interrupt vector.  The combined handler is PORTC_PORTD_IRQHandler, not two
+% separate PORTC_IRQHandler / PORTD_IRQHandler entries.
+% PORTA, PORTB, and PORTE each have their own dedicated vector.
+\begin{frame}[fragile]\frametitle{MCUXpresso SDK -- Interrupt Handler Names}
+    \begin{columns}
+        \column{0.58\textwidth}
+\begin{Verbatim}[fontsize=\scriptsize]
+/* Override in your application code */
+void DMA0_IRQHandler(void);
+void DMA1_IRQHandler(void);
+void DMA2_IRQHandler(void);
+void DMA3_IRQHandler(void);
+void FTFE_IRQHandler(void);        /* Flash done  */
+void LVD_LVW_IRQHandler(void);
+void LLWU_IRQHandler(void);
+void I2C0_IRQHandler(void);
+void SPI0_IRQHandler(void);
+void UART2_IRQHandler(void);       /* RS-232      */
+void ADC0_IRQHandler(void);
+void CMP0_IRQHandler(void);
+void TPM0_IRQHandler(void);        /* RGB PWM     */
+void TPM1_IRQHandler(void);        /* Buzzer PWM  */
+void RTC_IRQHandler(void);
+void PIT_IRQHandler(void);
+void LPTMR0_IRQHandler(void);
+void PORTA_IRQHandler(void);
+void PORTB_IRQHandler(void);
+void PORTC_PORTD_IRQHandler(void); /* C and D     */
+void PORTE_IRQHandler(void);
+\end{Verbatim}
+        \column{0.42\textwidth}
+            \begin{itemize}
+                \item Names defined in\\
+                      \textbf{startup\_mcxc143.c}
+                \item Override: define the same\\
+                      function in your code\\
+                      (weak symbol replacement)
+                \item \textbf{PORTC and PORTD share\\
+                      one IRQ vector}\\
+                      $\Rightarrow$ \texttt{PORTC\_PORTD\_IRQHandler}
+                \item Cortex-M0+ NVIC:\\
+                      \textbf{4 priority levels}\\
+                      (2-bit priority field)
+                \item CMSIS API:\\
+                      \texttt{NVIC\_EnableIRQ()}\\
+                      \texttt{NVIC\_SetPriority()}
+            \end{itemize}
+    \end{columns}
+\end{frame}
+
+%------------------------------------------------------------------------------
+\bluepage{Thank You For Your Attention!}
+
+\end{document}
