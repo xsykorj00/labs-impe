@@ -37,11 +37,20 @@ static char prompt[7] = "Login>";
 
 /* ── Small reusable helpers ──────────────────────────────────────────────── */
 
-/* Spin for 'ticks' iterations – used to pace the buzzer square wave. */
-static void delay(int ticks)
-{
-    volatile int i;
-    for (i = 0; i < ticks; i++) { }
+/* SysTick delay – 48 MHz core clock, 24-bit counter max ~349 ms */
+#define SYSTICK_MAX_US 349000UL
+static void delay_us(uint32_t us) {
+    if (!us) return;
+    if (us > SYSTICK_MAX_US) us = SYSTICK_MAX_US;
+    SysTick->CTRL = 0; SysTick->VAL = 0;
+    SysTick->LOAD = 48UL * us - 1UL;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+    while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)) {}
+    SysTick->CTRL = 0;
+}
+static void delay_ms(uint32_t ms) {
+    uint32_t c = ms / 349; while (c--) delay_us(349000UL);
+    uint32_t r = ms % 349; if (r) delay_us(r * 1000UL);
 }
 
 /* Compare two strings of exactly n characters; return 1 if equal. */
@@ -102,9 +111,9 @@ static void beep(void)
     int i;
     for (i = 0; i < 500; i++) {
         GPIOB->PSOR = (1u << 0);    /* PTB0 high */
-        delay(500);
+        delay_us(500);
         GPIOB->PCOR = (1u << 0);    /* PTB0 low  */
-        delay(500);
+        delay_us(500);
     }
 }
 

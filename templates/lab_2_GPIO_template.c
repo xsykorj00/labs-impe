@@ -99,10 +99,20 @@ static volatile uint32_t face_ticks = 0;
 
 /* ── Utility functions ───────────────────────────────────────────────────── */
 
-static void delay(uint32_t ticks)
-{
-    volatile uint32_t i;
-    for (i = 0; i < ticks; i++) { __NOP(); }
+/* SysTick delay – 48 MHz core clock, 24-bit counter max ~349 ms */
+#define SYSTICK_MAX_US 349000UL
+static void delay_us(uint32_t us) {
+    if (!us) return;
+    if (us > SYSTICK_MAX_US) us = SYSTICK_MAX_US;
+    SysTick->CTRL = 0; SysTick->VAL = 0;
+    SysTick->LOAD = 48UL * us - 1UL;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+    while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)) {}
+    SysTick->CTRL = 0;
+}
+static void delay_ms(uint32_t ms) {
+    uint32_t c = ms / 349; while (c--) delay_us(349000UL);
+    uint32_t r = ms % 349; if (r) delay_us(r * 1000UL);
 }
 
 static void display_off(void)
@@ -162,10 +172,10 @@ static void welcome_animation(void)
     const uint32_t HOLD = 250000;
     int round;
     for (round = 0; round < 3; round++) {
-        show_on_dig123(DIG1, PATTERN_L); delay(HOLD); display_off();
-        show_on_dig123(DIG2, PATTERN_A); delay(HOLD); display_off();
-        show_on_dig123(DIG3, PATTERN_b); delay(HOLD); display_off();
-        show_on_dig4(PATTERN_2);         delay(HOLD); display_off();
+        show_on_dig123(DIG1, PATTERN_L); delay_us(HOLD); display_off();
+        show_on_dig123(DIG2, PATTERN_A); delay_us(HOLD); display_off();
+        show_on_dig123(DIG3, PATTERN_b); delay_us(HOLD); display_off();
+        show_on_dig4(PATTERN_2);         delay_us(HOLD); display_off();
     }
 }
 
@@ -284,10 +294,10 @@ int main(void)
         __enable_irq();
 
         /* Step B: Drive display (multiplexing) */
-        show_on_dig123(DIG1, current_face[0]); delay(1000);
-        show_on_dig123(DIG2, current_face[1]); delay(1000);
-        show_on_dig123(DIG3, current_face[2]); delay(1000);
-        show_on_dig4(current_face[3]);         delay(1000);
+        show_on_dig123(DIG1, current_face[0]); delay_us(1000);
+        show_on_dig123(DIG2, current_face[1]); delay_us(1000);
+        show_on_dig123(DIG3, current_face[2]); delay_us(1000);
+        show_on_dig4(current_face[3]);         delay_us(1000);
 
         /* Step C: Auto-reset countdown – revert to default after FACE_TIMEOUT cycles */
         if (face_ticks > 0) {
