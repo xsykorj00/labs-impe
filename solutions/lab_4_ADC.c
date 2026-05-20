@@ -78,10 +78,20 @@ static volatile uint8_t adc_result = 0;
 
 /* ── Display helpers ─────────────────────────────────────────────────────── */
 
-static void delay_us(uint32_t us)
-{
-    volatile uint32_t i;
-    for (i = 0; i < us * 48; i++) { __NOP(); }
+/* SysTick delay – 48 MHz core clock, 24-bit counter max ~349 ms */
+#define SYSTICK_MAX_US 349000UL
+static void delay_us(uint32_t us) {
+    if (!us) return;
+    if (us > SYSTICK_MAX_US) us = SYSTICK_MAX_US;
+    SysTick->CTRL = 0; SysTick->VAL = 0;
+    SysTick->LOAD = 48UL * us - 1UL;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
+    while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)) {}
+    SysTick->CTRL = 0;
+}
+static void delay_ms(uint32_t ms) {
+    uint32_t c = ms / 349; while (c--) delay_us(349000UL);
+    uint32_t r = ms % 349; if (r) delay_us(r * 1000UL);
 }
 
 static void display_off(void)
